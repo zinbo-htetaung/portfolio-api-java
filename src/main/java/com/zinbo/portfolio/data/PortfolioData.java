@@ -76,43 +76,54 @@ public class PortfolioData {
     }
 
     public List<Map<String, Object>> getExperiences() {
-        return List.of(
-            Map.of(
-                "id",      1,
-                "role",    "RPA Developer — Intern",
-                "company", "PSA Corporation Limited",
-                "type",    "Year-long Internship · Extended by 2 months",
-                "period",  "Apr 2025 – Apr 2026",
-                "bullets", List.of(
-                    "Built 5+ production automation workflows with UiPath, Power Automate, and Python across port terminal operations.",
-                    "Attendance automation deployed across 18 departments — saved an estimated 6,500+ staff-hours per year.",
-                    "Container onboarding automation replaced a 10–20 min manual process, saving 180+ hours annually.",
-                    "Built Power BI dashboards and integrated SharePoint with Power Automate for cross-department reporting.",
-                    "Internship extended by 2 months at PSA's request."
-                )
-            ),
-            Map.of(
-                "id",      2,
-                "role",    "Owner",
-                "company", "Bae Kitchen (Self-Employed)",
-                "type",    "Myanmar",
-                "period",  "2021 – 2022",
-                "bullets", List.of(
-                    "Ran an online F&B business solo — handled everything from supply and operations to customer service."
-                )
-            ),
-            Map.of(
-                "id",      3,
-                "role",    "IT Trainee",
-                "company", "Cloud-9 IT Solutions & Services",
-                "type",    "Myanmar",
-                "period",  "2020 – 2022",
-                "bullets", List.of(
-                    "Helped deploy 50+ CCTV cameras across a supermarket site — cabling, mounting, and system configuration.",
-                    "Picked up hands-on hardware troubleshooting across multiple client installations."
-                )
-            )
-        );
+        var psa = new java.util.LinkedHashMap<String, Object>();
+        psa.put("id",      1);
+        psa.put("role",    "RPA Developer — Intern");
+        psa.put("company", "PSA Corporation Limited");
+        psa.put("type",    "Year-long Internship · Extended by 2 months");
+        psa.put("period",  "Apr 2025 – Apr 2026");
+        psa.put("bullets", List.of(
+            "Built 5+ production RPA workflows using UiPath, Power Automate, and Python — covering data extraction, report generation, and email automation across port terminal operations.",
+            "Attendance automation deployed across 18 departments — cut an estimated 6,500+ staff-hours of manual work per year.",
+            "Container onboarding workflow replaced a 10–20 min manual process, saving 180+ hours annually and improving data consistency.",
+            "Consolidated scattered reporting into a centralised automation system, making it easier to maintain and scale across teams.",
+            "Built Power BI dashboards, integrated SharePoint with Power Automate for workflow triggers, and extracted data from databases using SQL.",
+            "Internship extended by 2 months at PSA's request — stayed on to onboard and support incoming automation projects."
+        ));
+
+        var baeKitchen = new java.util.LinkedHashMap<String, Object>();
+        baeKitchen.put("id",      2);
+        baeKitchen.put("role",    "Owner");
+        baeKitchen.put("company", "Bae Kitchen (Self-Employed)");
+        baeKitchen.put("type",    "Myanmar");
+        baeKitchen.put("period",  "2021 – 2022");
+        baeKitchen.put("bullets", List.of(
+            "Founded and ran a home-based F&B business — handled everything from sourcing and cooking to packaging, delivery coordination, and customer service.",
+            "Used Facebook as the primary sales channel — managed orders, enquiries, and promotions independently.",
+            "Built a loyal repeat customer base through consistent product quality and reliable service."
+        ));
+        baeKitchen.put("link", Map.of(
+            "label", "View on Facebook",
+            "url",   "https://www.facebook.com/Bae.tgi/"
+        ));
+
+        var cloud9 = new java.util.LinkedHashMap<String, Object>();
+        cloud9.put("id",      3);
+        cloud9.put("role",    "IT Trainee");
+        cloud9.put("company", "Cloud-9 IT Solutions & Services");
+        cloud9.put("type",    "Myanmar");
+        cloud9.put("period",  "2020 – 2022");
+        cloud9.put("bullets", List.of(
+            "Supported full-scale deployment of 50+ CCTV cameras across a supermarket site — structured cabling, mounting, and system configuration.",
+            "Assisted with hardware troubleshooting and diagnostics across multiple client site visits.",
+            "Gained practical exposure to IT infrastructure setup, network configuration, and on-site client support."
+        ));
+        cloud9.put("link", Map.of(
+            "label", "View on Facebook",
+            "url",   "https://www.facebook.com/cloud9itsolution"
+        ));
+
+        return List.of(psa, baeKitchen, cloud9);
     }
 
     public List<Map<String, Object>> getProjects() {
@@ -120,32 +131,37 @@ public class PortfolioData {
             Map.of("id", 1, "name", "Personal Portfolio Website", "year", "2025",
                    "tags", List.of("React", "Spring Boot", "Vercel", "Railway"),
                    "bullets", List.of(
-                       "This site — React 19 + Spring Boot, custom domain, hCaptcha, Resend email API, Gemini-powered chatbot, and a cat loading animation."
+                       "This site — React 19 + Spring Boot, custom domain, hCaptcha, Resend email API, Gemini-powered chatbot, and a cat loading animation.",
+                       "Glassmorphism UI, dark/light theme, and fully responsive across all screen sizes."
                    )),
             Map.of("id", 2, "name", "Library Book Rental Platform", "year", "2025",
                    "tags", List.of("Java", "Node.js", "PostgreSQL", "Azure CI/CD", "JWT", "Playwright"),
                    "bullets", List.of(
-                       "Full-stack rental system with JWT auth, admin dashboard, Gemini-powered book chatbot, and automated Playwright tests on Azure DevOps."
+                       "Full-stack rental system with JWT auth, admin dashboard, and full CRUD for books, users, and rentals.",
+                       "Gemini-powered book recommendation chatbot and automated Playwright tests running on Azure DevOps CI/CD."
                    )),
             Map.of("id", 3, "name", "Online Furniture Website", "year", "2024",
                    "tags", List.of("Full-Stack", "Agile", "JavaScript"),
                    "bullets", List.of(
-                       "Team of 3, Agile sprints — built a promotions engine and 3D interactive room view."
+                       "Built in a 3-person Agile team — sprint planning, daily stand-ups, and Git collaboration across feature branches.",
+                       "Implemented a dynamic promotions engine and a 3D interactive room-view feature."
                    )),
             Map.of("id", 4, "name", "Cleaning Service Platform", "year", "2024",
                    "tags", List.of("Java", "REST API", "JWT"),
                    "bullets", List.of(
-                       "REST API with full booking lifecycle and role-based access for customers and staff."
+                       "REST API with full booking lifecycle — create, confirm, reschedule, and cancel.",
+                       "Role-based access control for customers and staff, with a secure checkout flow."
                    )),
             Map.of("id", 5, "name", "Web Security Project", "year", "2024",
                    "tags", List.of("Cybersecurity", "OWASP Top 10"),
                    "bullets", List.of(
-                       "Audited a demo app against OWASP Top 10 — found and patched SQL injection, XSS, and broken auth."
+                       "Audited a demo web app against the OWASP Top 10 — identified and patched SQL injection, XSS, and broken auth vulnerabilities."
                    )),
             Map.of("id", 6, "name", "Sustainability Awareness Website", "year", "2023",
                    "tags", List.of("JavaScript", "HTML/CSS", "JWT"),
                    "bullets", List.of(
-                       "Gamified platform with daily quests, in-app currency, and a virtual store — JWT auth throughout."
+                       "Gamified platform with daily quests, in-app currency, a virtual store, and a leaderboard.",
+                       "JWT-secured authentication with session management and persistent user progress."
                    ))
         );
     }
