@@ -18,5 +18,8 @@ public record ContactRequest(
     @NotBlank(message = "Message is required")
     @Size(min = 10, message = "Message must be at least 10 characters")
     @Size(max = 2000, message = "Message must be under 2000 characters")
-    String message
+    String message,
+
+    @NotBlank(message = "Captcha token is required")
+    String captchaToken
 ) {}

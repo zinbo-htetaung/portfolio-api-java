@@ -11,23 +11,27 @@ import java.util.Map;
 public class PortfolioData {
 
     public Map<String, Object> getProfile() {
-        return Map.of(
-            "name",     "Zin Bo Htet Aung",
-            "location", "Singapore",
-            "tagline",  "Software Engineer · Open to Opportunities",
-            "email",    "zinbohtetaung@gmail.com",
-            "links", Map.of(
-                "github",    "https://github.com/zinbo-htetaung",
-                "linkedin",  "https://www.linkedin.com/in/zinbohtetaung/",
-                "portfolio", "https://zinbohtetaung.com"
-            )
-        );
+        var links = new java.util.LinkedHashMap<String, Object>();
+        links.put("github",    "https://github.com/zinbo-htetaung");
+        links.put("linkedin",  "https://www.linkedin.com/in/zinbohtetaung/");
+        links.put("portfolio", "https://zinbohtetaung.com");
+        links.put("resume",    "/Zin Bo Htet Aung.pdf");
+
+        var profile = new java.util.LinkedHashMap<String, Object>();
+        profile.put("name",        "Zin Bo Htet Aung");
+        profile.put("location",    "Singapore");
+        profile.put("tagline",     "Software Engineer · Open to Opportunities");
+        profile.put("email",       "zinbohtetaung@gmail.com");
+        profile.put("phonenumber", "+65 98509604");
+        profile.put("links",       links);
+        return profile;
     }
 
     public Map<String, Object> getHero() {
         return Map.of(
             "subhead", "Full-Stack Developer · Intelligent Automations · Open to Work",
-            "bio",     "Fresh IT graduate passionate about building reliable software and intelligent automation solutions that create real impact."
+            "bio",     "Fresh IT graduate passionate about building reliable software and intelligent automation solutions that create real impact.",
+            "photo",   "/ProfilePic.webp"
         );
     }
 

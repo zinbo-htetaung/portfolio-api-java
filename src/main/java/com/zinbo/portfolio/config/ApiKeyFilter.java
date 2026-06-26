@@ -36,6 +36,12 @@ public class ApiKeyFilter extends OncePerRequestFilter {
                                     HttpServletResponse res,
                                     FilterChain chain) throws ServletException, IOException {
 
+        // Pass CORS preflight through — Spring's CORS handler must run before the API key check
+        if ("OPTIONS".equalsIgnoreCase(req.getMethod())) {
+            chain.doFilter(req, res);
+            return;
+        }
+
         // Allow health check without API key (for UptimeRobot)
         if (req.getRequestURI().equals("/api/health")) {
             chain.doFilter(req, res);
