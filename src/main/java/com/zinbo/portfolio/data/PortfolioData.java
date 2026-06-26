@@ -153,18 +153,18 @@ public class PortfolioData {
 
     public Map<String, Object> getSkills() {
         return Map.of(
-            "technical", List.of(
-                Map.of("name", "Java (Web)",      "icon", "☕"),
-                Map.of("name", "Backend Dev",     "icon", "⚙️"),
-                Map.of("name", "SQL / Databases", "icon", "🗄️"),
-                Map.of("name", "REST APIs",       "icon", "🔗"),
-                Map.of("name", "Python",          "icon", "🐍"),
-                Map.of("name", "JavaScript",      "icon", "⚡"),
-                Map.of("name", "RPA Tools",       "icon", "🤖"),
-                Map.of("name", "React (UI)",      "icon", "⚛️"),
-                Map.of("name", "CI/CD & Git",     "icon", "🔄"),
-                Map.of("name", "Agile Practice",  "icon", "🏃"),
-                Map.of("name", "OWASP Top 10",    "icon", "🔐")
+            "pills", List.of(
+                Map.of("name", "Java (Web)",      "icon", "☕", "summary", "Spring Boot REST APIs, MVC, and backend services"),
+                Map.of("name", "Backend Dev",     "icon", "⚙️", "summary", "Server-side logic, auth, and scalable architecture"),
+                Map.of("name", "SQL / Databases", "icon", "🗄️", "summary", "PostgreSQL, schema design, and query optimisation"),
+                Map.of("name", "REST APIs",       "icon", "🔗", "summary", "API design, JSON, HTTP methods, and integrations"),
+                Map.of("name", "Python",          "icon", "🐍", "summary", "Scripting, automation, and data processing"),
+                Map.of("name", "JavaScript",      "icon", "⚡", "summary", "ES6+, async/await, DOM, and browser APIs"),
+                Map.of("name", "RPA Tools",       "icon", "🤖", "summary", "UiPath & Power Automate workflow automation"),
+                Map.of("name", "React (UI)",      "icon", "⚛️", "summary", "Component-driven UIs with hooks and state management"),
+                Map.of("name", "CI/CD & Git",     "icon", "🔄", "summary", "Azure DevOps pipelines, GitHub Actions, branching"),
+                Map.of("name", "Agile Practice",  "icon", "🏃", "summary", "Scrum sprints, kanban boards, and team delivery"),
+                Map.of("name", "OWASP Top 10",    "icon", "🔐", "summary", "Web security auditing and vulnerability patching")
             ),
             "languages", List.of(
                 Map.of("lang", "Burmese", "level", "Native"),
