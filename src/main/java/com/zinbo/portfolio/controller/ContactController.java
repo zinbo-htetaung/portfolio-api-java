@@ -51,7 +51,7 @@ public class ContactController {
     private void sendEmail(ContactRequest req) {
         if (mailTo == null || mailTo.isBlank()) return;
         // Fire-and-forget — don't block the HTTP response
-        Thread.ofVirtual().start(() -> {
+        new Thread(() -> {
             try {
                 SimpleMailMessage msg = new SimpleMailMessage();
                 msg.setTo(mailTo);
@@ -67,7 +67,7 @@ public class ContactController {
             } catch (Exception e) {
                 System.out.println("⚠️ Email send failed: " + e.getMessage());
             }
-        });
+        }).start();
     }
 
     private boolean verifyCaptcha(String token) {
