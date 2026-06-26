@@ -1,9 +1,0 @@
-services:
-  - type: web
-    name: portfolio-api
-    runtime: java
-    buildCommand: ./mvnw clean package -DskipTests
-    startCommand: java -jar target/portfolio-api-1.0.0.jar
-    envVars:
-      - key: JAVA_VERSION
-        value: 17
