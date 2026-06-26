@@ -50,20 +50,24 @@ public class ContactController {
 
     private void sendEmail(ContactRequest req) {
         if (mailTo == null || mailTo.isBlank()) return;
-        try {
-            SimpleMailMessage msg = new SimpleMailMessage();
-            msg.setTo(mailTo);
-            msg.setReplyTo(req.email());
-            msg.setSubject("Portfolio Contact: " + req.name());
-            msg.setText(
-                "Name:    " + req.name()    + "\n" +
-                "Email:   " + req.email()   + "\n\n" +
-                req.message()
-            );
-            mailSender.send(msg);
-        } catch (Exception e) {
-            System.out.println("⚠️ Email send failed: " + e.getMessage());
-        }
+        // Fire-and-forget — don't block the HTTP response
+        Thread.ofVirtual().start(() -> {
+            try {
+                SimpleMailMessage msg = new SimpleMailMessage();
+                msg.setTo(mailTo);
+                msg.setReplyTo(req.email());
+                msg.setSubject("Portfolio Contact: " + req.name());
+                msg.setText(
+                    "Name:    " + req.name()    + "\n" +
+                    "Email:   " + req.email()   + "\n\n" +
+                    req.message()
+                );
+                mailSender.send(msg);
+                System.out.println("📧 Email sent to " + mailTo);
+            } catch (Exception e) {
+                System.out.println("⚠️ Email send failed: " + e.getMessage());
+            }
+        });
     }
 
     private boolean verifyCaptcha(String token) {
