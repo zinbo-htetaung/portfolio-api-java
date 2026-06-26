@@ -6,8 +6,6 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -25,14 +23,11 @@ public class ContactController {
     @Value("${app.hcaptcha.secret}")
     private String hcaptchaSecret;
 
+    @Value("${app.resend.api-key:}")
+    private String resendApiKey;
+
     @Value("${app.mail.to:}")
     private String mailTo;
-
-    private final JavaMailSender mailSender;
-
-    public ContactController(JavaMailSender mailSender) {
-        this.mailSender = mailSender;
-    }
 
     @PostMapping
     public ResponseEntity<ApiResponse<String>> contact(@Valid @RequestBody ContactRequest req) {
@@ -49,25 +44,50 @@ public class ContactController {
     }
 
     private void sendEmail(ContactRequest req) {
+        if (resendApiKey == null || resendApiKey.isBlank()) return;
         if (mailTo == null || mailTo.isBlank()) return;
-        // Fire-and-forget — don't block the HTTP response
+
         new Thread(() -> {
             try {
-                SimpleMailMessage msg = new SimpleMailMessage();
-                msg.setTo(mailTo);
-                msg.setReplyTo(req.email());
-                msg.setSubject("Portfolio Contact: " + req.name());
-                msg.setText(
-                    "Name:    " + req.name()    + "\n" +
-                    "Email:   " + req.email()   + "\n\n" +
-                    req.message()
-                );
-                mailSender.send(msg);
-                System.out.println("📧 Email sent to " + mailTo);
+                String text = "Name:    " + req.name()  + "\n"
+                            + "Email:   " + req.email() + "\n\n"
+                            + req.message();
+
+                // Escape for JSON
+                String body = "{"
+                    + "\"from\":\"Portfolio <onboarding@resend.dev>\","
+                    + "\"to\":[\"" + jsonEscape(mailTo) + "\"],"
+                    + "\"reply_to\":\"" + jsonEscape(req.email()) + "\","
+                    + "\"subject\":\"Portfolio Contact: " + jsonEscape(req.name()) + "\","
+                    + "\"text\":\"" + jsonEscape(text) + "\""
+                    + "}";
+
+                HttpClient client = HttpClient.newHttpClient();
+                HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://api.resend.com/emails"))
+                    .header("Authorization", "Bearer " + resendApiKey)
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(body))
+                    .build();
+
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                if (response.statusCode() == 200 || response.statusCode() == 201) {
+                    System.out.println("📧 Email sent via Resend to " + mailTo);
+                } else {
+                    System.out.println("⚠️ Resend error " + response.statusCode() + ": " + response.body());
+                }
             } catch (Exception e) {
                 System.out.println("⚠️ Email send failed: " + e.getMessage());
             }
         }).start();
+    }
+
+    private static String jsonEscape(String s) {
+        return s.replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r")
+                .replace("\t", "\\t");
     }
 
     private boolean verifyCaptcha(String token) {
