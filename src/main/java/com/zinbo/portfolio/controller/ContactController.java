@@ -48,8 +48,10 @@ public class ContactController {
                 .build();
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            System.out.println("🔐 hCaptcha response: " + response.body());
             return response.body().contains("\"success\":true");
         } catch (Exception e) {
+            System.out.println("🔐 hCaptcha exception: " + e.getMessage());
             return false;
         }
     }
