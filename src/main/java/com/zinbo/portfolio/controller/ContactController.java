@@ -37,8 +37,12 @@ public class ContactController {
 
     private boolean verifyCaptcha(String token) {
         try {
-            String body = "response=" + URLEncoder.encode(token, StandardCharsets.UTF_8)
-                        + "&secret="   + URLEncoder.encode(hcaptchaSecret, StandardCharsets.UTF_8);
+            String secret = hcaptchaSecret.trim();
+            System.out.printf("🔐 secret len=%d first8=%s%n", secret.length(),
+                secret.length() >= 8 ? secret.substring(0, 8) : secret);
+
+            String body = "response=" + URLEncoder.encode(token.trim(), StandardCharsets.UTF_8)
+                        + "&secret="   + URLEncoder.encode(secret, StandardCharsets.UTF_8);
 
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
