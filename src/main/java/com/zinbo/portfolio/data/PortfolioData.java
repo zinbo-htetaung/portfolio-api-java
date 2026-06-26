@@ -117,21 +117,37 @@ public class PortfolioData {
 
     public List<Map<String, Object>> getProjects() {
         return List.of(
-            Map.of("id", 1, "name", "Library Book Rental Platform",    "year", "2025",
+            Map.of("id", 1, "name", "Library Book Rental Platform", "year", "2025",
                    "tags", List.of("Java","Node.js","PostgreSQL","Azure","CI/CD","JWT"),
-                   "description", "Full-stack rental platform with AI chatbot, JWT auth, CRUD admin dashboard, and Azure CI/CD pipeline."),
-            Map.of("id", 2, "name", "Online Furniture Website",         "year", "2024",
+                   "bullets", List.of(
+                       "Full-stack rental platform with JWT authentication and role-based admin dashboard.",
+                       "Integrated an AI chatbot for book recommendations using the Gemini API.",
+                       "Built CI/CD pipeline on Azure DevOps with automated deployment."
+                   )),
+            Map.of("id", 2, "name", "Online Furniture Website", "year", "2024",
                    "tags", List.of("Full-Stack","Agile","Git/GitHub"),
-                   "description", "Built in a 3-person Agile team with dynamic promotions and a 3D room view."),
-            Map.of("id", 3, "name", "Cleaning Service Platform",        "year", "2024",
+                   "bullets", List.of(
+                       "Built in a 3-person Agile team with sprint planning and Git collaboration.",
+                       "Implemented dynamic promotions engine and a 3D interactive room view."
+                   )),
+            Map.of("id", 3, "name", "Cleaning Service Platform", "year", "2024",
                    "tags", List.of("Java","REST API","Cloud","CRUD"),
-                   "description", "Cloud-hosted REST API with booking lifecycle, secure checkout, and role-based access control."),
-            Map.of("id", 4, "name", "Web Security Project",             "year", "2024",
+                   "bullets", List.of(
+                       "Cloud-hosted REST API with full booking lifecycle management.",
+                       "Secure checkout flow and role-based access control for customers and staff."
+                   )),
+            Map.of("id", 4, "name", "Web Security Project", "year", "2024",
                    "tags", List.of("Cybersecurity","OWASP Top 10","SQL Injection","XSS"),
-                   "description", "Audited and patched a demo app against OWASP Top 10 vulnerabilities."),
+                   "bullets", List.of(
+                       "Audited a demo web application against OWASP Top 10 vulnerabilities.",
+                       "Patched SQL injection, XSS, and broken authentication issues with documented remediation."
+                   )),
             Map.of("id", 5, "name", "Sustainability Awareness Website", "year", "2023",
                    "tags", List.of("JavaScript","HTML/CSS","JWT","Full-Stack"),
-                   "description", "Gamified platform with daily quests, in-app currency, virtual store, and JWT authentication.")
+                   "bullets", List.of(
+                       "Gamified platform with daily quests, in-app currency, and a virtual store.",
+                       "JWT-secured authentication with session management across the full stack."
+                   ))
         );
     }
 
