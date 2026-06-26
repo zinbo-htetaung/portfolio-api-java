@@ -6,6 +6,8 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -23,11 +25,22 @@ public class ContactController {
     @Value("${app.hcaptcha.secret}")
     private String hcaptchaSecret;
 
+    @Value("${app.mail.to:}")
+    private String mailTo;
+
+    private final JavaMailSender mailSender;
+
+    public ContactController(JavaMailSender mailSender) {
+        this.mailSender = mailSender;
+    }
+
     @PostMapping
     public ResponseEntity<ApiResponse<String>> contact(@Valid @RequestBody ContactRequest req) {
         if (!verifyCaptcha(req.captchaToken())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Captcha verification failed");
         }
+
+        sendEmail(req);
 
         System.out.printf("%n📬 Contact form submission:%n  From: %s <%s>%n  Message: %s%n%n",
             req.name(), req.email(), req.message());
@@ -35,12 +48,27 @@ public class ContactController {
         return ResponseEntity.ok(ApiResponse.ok("Message received. Thank you, " + req.name() + "!"));
     }
 
+    private void sendEmail(ContactRequest req) {
+        if (mailTo == null || mailTo.isBlank()) return;
+        try {
+            SimpleMailMessage msg = new SimpleMailMessage();
+            msg.setTo(mailTo);
+            msg.setReplyTo(req.email());
+            msg.setSubject("Portfolio Contact: " + req.name());
+            msg.setText(
+                "Name:    " + req.name()    + "\n" +
+                "Email:   " + req.email()   + "\n\n" +
+                req.message()
+            );
+            mailSender.send(msg);
+        } catch (Exception e) {
+            System.out.println("⚠️ Email send failed: " + e.getMessage());
+        }
+    }
+
     private boolean verifyCaptcha(String token) {
         try {
             String secret = hcaptchaSecret.trim();
-            System.out.printf("🔐 secret len=%d first8=%s%n", secret.length(),
-                secret.length() >= 8 ? secret.substring(0, 8) : secret);
-
             String body = "response=" + URLEncoder.encode(token.trim(), StandardCharsets.UTF_8)
                         + "&secret="   + URLEncoder.encode(secret, StandardCharsets.UTF_8);
 
