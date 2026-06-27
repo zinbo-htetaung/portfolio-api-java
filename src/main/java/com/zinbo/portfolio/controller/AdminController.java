@@ -216,6 +216,11 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.ok(svc.getSkills()));
     }
 
+    @GetMapping("/skills/pills")
+    public ResponseEntity<?> getPills() {
+        return ResponseEntity.ok(ApiResponse.ok(svc.pillRepo().findAllByOrderByDisplayOrderAsc()));
+    }
+
     @PostMapping("/skills/pills")
     public ResponseEntity<?> createPill(@RequestBody Map<String, String> body) {
         var p = new SkillPillEntity();
@@ -243,6 +248,11 @@ public class AdminController {
     }
 
     // ── Skills: Languages ──────────────────────────────────────────
+
+    @GetMapping("/skills/languages")
+    public ResponseEntity<?> getLanguages() {
+        return ResponseEntity.ok(ApiResponse.ok(svc.langRepo().findAllByOrderByDisplayOrderAsc()));
+    }
 
     @PostMapping("/skills/languages")
     public ResponseEntity<?> createLanguage(@RequestBody Map<String, String> body) {
