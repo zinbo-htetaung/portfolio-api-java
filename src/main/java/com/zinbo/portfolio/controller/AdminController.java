@@ -1,7 +1,9 @@
 package com.zinbo.portfolio.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zinbo.portfolio.entity.*;
 import com.zinbo.portfolio.model.ApiResponse;
+import com.zinbo.portfolio.service.BackupService;
 import com.zinbo.portfolio.service.PortfolioService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,11 +18,14 @@ import java.util.Map;
 public class AdminController {
 
     private final PortfolioService svc;
-    private final ViewController viewCtrl;
+    private final ViewController   viewCtrl;
+    private final BackupService    backup;
+    private final ObjectMapper     mapper = new ObjectMapper();
 
-    public AdminController(PortfolioService svc, ViewController viewCtrl) {
-        this.svc = svc;
+    public AdminController(PortfolioService svc, ViewController viewCtrl, BackupService backup) {
+        this.svc      = svc;
         this.viewCtrl = viewCtrl;
+        this.backup   = backup;
     }
 
     // ── Insights ───────────────────────────────────────────────────
@@ -58,6 +63,7 @@ public class AdminController {
     @PutMapping("/profile")
     public ResponseEntity<?> updateProfile(@RequestBody Map<String, String> body) {
         var e = svc.profileRepo().findById(1L).orElse(new ProfileEntity());
+        backup.snapshot("profile", svc.getProfile());
         if (body.containsKey("name"))         e.setName(body.get("name"));
         if (body.containsKey("location"))     e.setLocation(body.get("location"));
         if (body.containsKey("tagline"))      e.setTagline(body.get("tagline"));
@@ -83,6 +89,7 @@ public class AdminController {
 
     @PutMapping("/hero")
     public ResponseEntity<?> updateHero(@RequestBody Map<String, String> body) {
+        backup.snapshot("hero", svc.getHero());
         var e = svc.heroRepo().findById(1L).orElse(new HeroEntity());
         if (body.containsKey("subhead")) e.setSubhead(body.get("subhead"));
         if (body.containsKey("bio"))     e.setBio(body.get("bio"));
@@ -104,6 +111,7 @@ public class AdminController {
 
     @PutMapping("/about")
     public ResponseEntity<?> updateAbout(@RequestBody Map<String, Object> body) {
+        backup.snapshot("about", svc.getAbout());
         var e = svc.aboutRepo().findById(1L).orElse(new AboutEntity());
         if (body.containsKey("bio")) e.setBio((String) body.get("bio"));
         if (body.containsKey("highlights")) {
@@ -134,6 +142,7 @@ public class AdminController {
 
     @PostMapping("/education")
     public ResponseEntity<?> createEducation(@RequestBody Map<String, Object> body) {
+        backup.snapshot("education", svc.getEducation());
         var e = new EducationEntity();
         e.setInstitution((String) body.getOrDefault("institution", ""));
         e.setDegree((String) body.getOrDefault("degree", ""));
@@ -152,6 +161,7 @@ public class AdminController {
 
     @PutMapping("/education/{id}")
     public ResponseEntity<?> updateEducation(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        backup.snapshot("education", svc.getEducation());
         var e = svc.eduRepo().findById(id)
             .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(HttpStatus.NOT_FOUND));
         if (body.containsKey("institution"))  e.setInstitution((String) body.get("institution"));
@@ -170,6 +180,7 @@ public class AdminController {
 
     @DeleteMapping("/education/{id}")
     public ResponseEntity<?> deleteEducation(@PathVariable Long id) {
+        backup.snapshot("education", svc.getEducation());
         svc.eduRepo().deleteById(id);
         return ResponseEntity.ok(ApiResponse.ok("Education deleted"));
     }
@@ -196,6 +207,7 @@ public class AdminController {
 
     @PostMapping("/experiences")
     public ResponseEntity<?> createExperience(@RequestBody Map<String, Object> body) {
+        backup.snapshot("experience", svc.getExperiences());
         var e = new ExperienceEntity();
         applyExpBody(e, body);
         if (!body.containsKey("displayOrder"))
@@ -206,6 +218,7 @@ public class AdminController {
 
     @PutMapping("/experiences/{id}")
     public ResponseEntity<?> updateExperience(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        backup.snapshot("experience", svc.getExperiences());
         var e = svc.expRepo().findById(id)
             .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(HttpStatus.NOT_FOUND));
         applyExpBody(e, body);
@@ -215,6 +228,7 @@ public class AdminController {
 
     @DeleteMapping("/experiences/{id}")
     public ResponseEntity<?> deleteExperience(@PathVariable Long id) {
+        backup.snapshot("experience", svc.getExperiences());
         svc.expRepo().deleteById(id);
         return ResponseEntity.ok(ApiResponse.ok("Experience deleted"));
     }
@@ -254,6 +268,7 @@ public class AdminController {
 
     @PostMapping("/projects")
     public ResponseEntity<?> createProject(@RequestBody Map<String, Object> body) {
+        backup.snapshot("projects", svc.getProjects());
         var p = new ProjectEntity();
         applyProjBody(p, body);
         if (!body.containsKey("displayOrder"))
@@ -264,6 +279,7 @@ public class AdminController {
 
     @PutMapping("/projects/{id}")
     public ResponseEntity<?> updateProject(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        backup.snapshot("projects", svc.getProjects());
         var p = svc.projRepo().findById(id)
             .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(HttpStatus.NOT_FOUND));
         applyProjBody(p, body);
@@ -273,6 +289,7 @@ public class AdminController {
 
     @DeleteMapping("/projects/{id}")
     public ResponseEntity<?> deleteProject(@PathVariable Long id) {
+        backup.snapshot("projects", svc.getProjects());
         svc.projRepo().deleteById(id);
         return ResponseEntity.ok(ApiResponse.ok("Project deleted"));
     }
@@ -312,6 +329,7 @@ public class AdminController {
 
     @PostMapping("/skills/pills")
     public ResponseEntity<?> createPill(@RequestBody Map<String, Object> body) {
+        backup.snapshot("skills", svc.getSkills());
         var p = new SkillPillEntity();
         p.setName((String) body.getOrDefault("name", ""));
         p.setIcon((String) body.getOrDefault("icon", ""));
@@ -325,6 +343,7 @@ public class AdminController {
 
     @PutMapping("/skills/pills/{id}")
     public ResponseEntity<?> updatePill(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        backup.snapshot("skills", svc.getSkills());
         var p = svc.pillRepo().findById(id)
             .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(HttpStatus.NOT_FOUND));
         if (body.containsKey("name"))         p.setName((String) body.get("name"));
@@ -337,6 +356,7 @@ public class AdminController {
 
     @DeleteMapping("/skills/pills/{id}")
     public ResponseEntity<?> deletePill(@PathVariable Long id) {
+        backup.snapshot("skills", svc.getSkills());
         svc.pillRepo().deleteById(id);
         return ResponseEntity.ok(ApiResponse.ok("Skill pill deleted"));
     }
@@ -349,7 +369,7 @@ public class AdminController {
             var m = new LinkedHashMap<String, Object>();
             m.put("id",           e.getId());
             m.put("lang",         e.getLang());
-            m.put("level",        parseLevel(e.getLevel()));
+            m.put("level",        e.getLevel() != null ? e.getLevel() : "");
             m.put("displayOrder", e.getDisplayOrder());
             return m;
         }).toList();
@@ -358,9 +378,10 @@ public class AdminController {
 
     @PostMapping("/skills/languages")
     public ResponseEntity<?> createLanguage(@RequestBody Map<String, Object> body) {
+        backup.snapshot("skills", svc.getSkills());
         var l = new SkillLanguageEntity();
         l.setLang((String) body.getOrDefault("lang", ""));
-        l.setLevel(body.containsKey("level") ? String.valueOf(((Number) body.get("level")).intValue()) : "0");
+        l.setLevel(body.containsKey("level") ? body.get("level").toString() : "");
         l.setDisplayOrder(body.containsKey("displayOrder")
             ? ((Number) body.get("displayOrder")).intValue()
             : (int) svc.langRepo().count());
@@ -370,10 +391,11 @@ public class AdminController {
 
     @PutMapping("/skills/languages/{id}")
     public ResponseEntity<?> updateLanguage(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        backup.snapshot("skills", svc.getSkills());
         var l = svc.langRepo().findById(id)
             .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(HttpStatus.NOT_FOUND));
         if (body.containsKey("lang"))  l.setLang((String) body.get("lang"));
-        if (body.containsKey("level")) l.setLevel(String.valueOf(((Number) body.get("level")).intValue()));
+        if (body.containsKey("level")) l.setLevel(body.get("level").toString());
         if (body.containsKey("displayOrder")) l.setDisplayOrder(((Number) body.get("displayOrder")).intValue());
         svc.langRepo().save(l);
         return ResponseEntity.ok(ApiResponse.ok("Language updated"));
@@ -381,11 +403,34 @@ public class AdminController {
 
     @DeleteMapping("/skills/languages/{id}")
     public ResponseEntity<?> deleteLanguage(@PathVariable Long id) {
+        backup.snapshot("skills", svc.getSkills());
         svc.langRepo().deleteById(id);
         return ResponseEntity.ok(ApiResponse.ok("Language deleted"));
     }
 
-    private int parseLevel(String level) {
-        try { return Integer.parseInt(level); } catch (Exception e) { return 0; }
+    private String parseLevel(String level) {
+        return level != null ? level : "";
+    }
+
+    // ── Backups ────────────────────────────────────────────────────
+
+    @GetMapping("/backups")
+    public ResponseEntity<?> listBackups(@RequestParam(required = false) String section) {
+        var list = section != null && !section.isBlank()
+            ? backup.listBySection(section)
+            : backup.listAll();
+        return ResponseEntity.ok(ApiResponse.ok(list));
+    }
+
+    @GetMapping("/backups/{id}")
+    public ResponseEntity<?> getBackup(@PathVariable Long id) {
+        var json = backup.getJson(id);
+        if (json == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Backup not found"));
+        try {
+            var data = mapper.readValue(json, Object.class);
+            return ResponseEntity.ok(ApiResponse.ok(data));
+        } catch (Exception e) {
+            return ResponseEntity.ok(ApiResponse.ok(json));
+        }
     }
 }
