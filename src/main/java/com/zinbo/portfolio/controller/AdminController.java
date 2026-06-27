@@ -16,8 +16,30 @@ import java.util.Map;
 public class AdminController {
 
     private final PortfolioService svc;
+    private final ViewController viewCtrl;
 
-    public AdminController(PortfolioService svc) { this.svc = svc; }
+    public AdminController(PortfolioService svc, ViewController viewCtrl) {
+        this.svc = svc;
+        this.viewCtrl = viewCtrl;
+    }
+
+    // ── Insights ───────────────────────────────────────────────────
+
+    @GetMapping("/insights")
+    public ResponseEntity<?> getInsights() {
+        var counts = new LinkedHashMap<String, Object>();
+        counts.put("education",  svc.eduRepo().count());
+        counts.put("experience", svc.expRepo().count());
+        counts.put("projects",   svc.projRepo().count());
+        counts.put("skills",     svc.pillRepo().count());
+        counts.put("languages",  svc.langRepo().count());
+
+        var m = new LinkedHashMap<String, Object>();
+        m.put("views",  viewCtrl.snapshot());
+        m.put("counts", counts);
+        m.put("health", Map.of("status", "ok", "db", "connected"));
+        return ResponseEntity.ok(ApiResponse.ok(m));
+    }
 
     // ── Profile ────────────────────────────────────────────────────
 
