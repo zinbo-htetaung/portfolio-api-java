@@ -99,6 +99,22 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.ok(svc.getEducation()));
     }
 
+    @PostMapping("/education")
+    public ResponseEntity<?> createEducation(@RequestBody Map<String, Object> body) {
+        var e = new EducationEntity();
+        e.setInstitution((String) body.getOrDefault("institution", ""));
+        e.setDegree((String) body.getOrDefault("degree", ""));
+        e.setPeriod((String) body.getOrDefault("period", ""));
+        if (body.containsKey("coursework")) {
+            @SuppressWarnings("unchecked")
+            var list = (List<String>) body.get("coursework");
+            e.setCourseworkJson(svc.toJson(list));
+        }
+        e.setDisplayOrder(body.containsKey("displayOrder") ? ((Number) body.get("displayOrder")).intValue() : (int) svc.eduRepo().count());
+        svc.eduRepo().save(e);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("Education created"));
+    }
+
     @PutMapping("/education/{id}")
     public ResponseEntity<?> updateEducation(@PathVariable Long id, @RequestBody Map<String, Object> body) {
         var e = svc.eduRepo().findById(id)
@@ -113,6 +129,12 @@ public class AdminController {
         }
         svc.eduRepo().save(e);
         return ResponseEntity.ok(ApiResponse.ok("Education updated"));
+    }
+
+    @DeleteMapping("/education/{id}")
+    public ResponseEntity<?> deleteEducation(@PathVariable Long id) {
+        svc.eduRepo().deleteById(id);
+        return ResponseEntity.ok(ApiResponse.ok("Education deleted"));
     }
 
     // ── Experiences ────────────────────────────────────────────────
