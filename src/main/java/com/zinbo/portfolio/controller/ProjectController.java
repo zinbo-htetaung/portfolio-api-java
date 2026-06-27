@@ -1,7 +1,7 @@
 package com.zinbo.portfolio.controller;
 
-import com.zinbo.portfolio.data.PortfolioData;
 import com.zinbo.portfolio.model.ApiResponse;
+import com.zinbo.portfolio.service.PortfolioService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,37 +14,26 @@ import java.util.Map;
 @RequestMapping("/api/projects")
 public class ProjectController {
 
-    private final PortfolioData data;
+    private final PortfolioService svc;
 
-    public ProjectController(PortfolioData data) {
-        this.data = data;
-    }
+    public ProjectController(PortfolioService svc) { this.svc = svc; }
 
-    // GET /api/projects          — all projects
-    // GET /api/projects?tag=Java — filter by tag (case-insensitive)
     @GetMapping
     public ResponseEntity<?> getProjects(@RequestParam(required = false) String tag) {
-        var projects = data.getProjects();
-
+        var projects = svc.getProjects();
         if (tag != null && !tag.isBlank()) {
             projects = projects.stream()
                 .filter(p -> ((List<String>) p.get("tags")).stream()
                     .anyMatch(t -> t.equalsIgnoreCase(tag)))
                 .toList();
         }
-
-        return ResponseEntity.ok(Map.of(
-            "success", true,
-            "count",   projects.size(),
-            "data",    projects
-        ));
+        return ResponseEntity.ok(Map.of("success", true, "count", projects.size(), "data", projects));
     }
 
-    // GET /api/projects/{id}
     @GetMapping("/{id}")
-    public ResponseEntity<?> getProjectById(@PathVariable int id) {
-        return data.getProjects().stream()
-            .filter(p -> ((int) p.get("id")) == id)
+    public ResponseEntity<?> getProjectById(@PathVariable Long id) {
+        return svc.getProjects().stream()
+            .filter(p -> id.equals(((Number) p.get("id")).longValue()))
             .findFirst()
             .map(p -> ResponseEntity.ok(Map.of("success", true, "data", p)))
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,

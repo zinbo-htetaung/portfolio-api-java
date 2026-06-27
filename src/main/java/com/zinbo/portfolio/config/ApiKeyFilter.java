@@ -1,5 +1,6 @@
 package com.zinbo.portfolio.config;
 
+import com.zinbo.portfolio.security.JwtUtil;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.Refill;
@@ -22,6 +23,10 @@ public class ApiKeyFilter extends OncePerRequestFilter {
     @Value("${app.api-key}")
     private String validApiKey;
 
+    private final JwtUtil jwtUtil;
+
+    public ApiKeyFilter(JwtUtil jwtUtil) { this.jwtUtil = jwtUtil; }
+
     // One rate-limit bucket per IP — 30 requests per minute
     private final ConcurrentHashMap<String, Bucket> buckets = new ConcurrentHashMap<>();
 
@@ -36,37 +41,59 @@ public class ApiKeyFilter extends OncePerRequestFilter {
                                     HttpServletResponse res,
                                     FilterChain chain) throws ServletException, IOException {
 
-        // Pass CORS preflight through — Spring's CORS handler must run before the API key check
         if ("OPTIONS".equalsIgnoreCase(req.getMethod())) {
             chain.doFilter(req, res);
             return;
         }
 
-        // Allow health check without API key (for UptimeRobot)
         if (req.getRequestURI().equals("/api/health")) {
             chain.doFilter(req, res);
             return;
         }
 
-        // Rate limiting — check IP first
+        // Rate limiting — same for all routes
         String ip = req.getRemoteAddr();
-        Bucket bucket = getBucket(ip);
-        if (!bucket.tryConsume(1)) {
-            res.setStatus(429);
-            res.setContentType(MediaType.APPLICATION_JSON_VALUE);
-            res.getWriter().write("{\"success\":false,\"error\":\"Too many requests — slow down\"}");
+        if (!getBucket(ip).tryConsume(1)) {
+            reject(res, 429, "Too many requests — slow down");
             return;
         }
 
-        // API key check — must send X-API-Key header
+        String uri = req.getRequestURI();
+
+        // Admin routes: require valid Bearer JWT (no API key needed)
+        if (uri.startsWith("/api/admin")) {
+            String auth = req.getHeader("Authorization");
+            if (auth == null || !auth.startsWith("Bearer ")) {
+                reject(res, 401, "Unauthorized — missing token");
+                return;
+            }
+            if (!jwtUtil.isValid(auth.substring(7))) {
+                reject(res, 401, "Unauthorized — invalid or expired token");
+                return;
+            }
+            chain.doFilter(req, res);
+            return;
+        }
+
+        // Auth login route: no API key required (admin app hits this directly)
+        if (uri.startsWith("/api/auth")) {
+            chain.doFilter(req, res);
+            return;
+        }
+
+        // All other public routes: require X-API-Key
         String apiKey = req.getHeader("X-API-Key");
         if (apiKey == null || !apiKey.equals(validApiKey)) {
-            res.setStatus(403);
-            res.setContentType(MediaType.APPLICATION_JSON_VALUE);
-            res.getWriter().write("{\"success\":false,\"error\":\"Forbidden — invalid or missing API key\"}");
+            reject(res, 403, "Forbidden — invalid or missing API key");
             return;
         }
 
         chain.doFilter(req, res);
+    }
+
+    private void reject(HttpServletResponse res, int status, String msg) throws IOException {
+        res.setStatus(status);
+        res.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        res.getWriter().write("{\"success\":false,\"error\":\"" + msg + "\"}");
     }
 }
