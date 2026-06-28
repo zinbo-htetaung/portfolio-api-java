@@ -66,11 +66,20 @@ public class ViewController {
     }
 
     private String extractIp(HttpServletRequest request) {
-        // Railway sits behind a load balancer — real IP is in X-Forwarded-For
-        String xff = request.getHeader("X-Forwarded-For");
+        // Log all headers to help diagnose Railway proxy behaviour
+        String xff    = request.getHeader("X-Forwarded-For");
+        String xReal  = request.getHeader("X-Real-IP");
+        String remote = request.getRemoteAddr();
+        System.out.println("🔍 IP headers — XFF: " + xff + " | X-Real-IP: " + xReal + " | remoteAddr: " + remote);
+
+        // Walk XFF chain left-to-right, return first public IP
         if (xff != null && !xff.isBlank()) {
-            return xff.split(",")[0].trim();
+            for (String part : xff.split(",")) {
+                String ip = part.trim();
+                if (!geoService.isPrivate(ip)) return ip;
+            }
         }
-        return request.getRemoteAddr();
+        if (xReal != null && !xReal.isBlank() && !geoService.isPrivate(xReal)) return xReal;
+        return remote;
     }
 }

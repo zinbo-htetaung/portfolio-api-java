@@ -23,17 +23,20 @@ public class GeoService {
     public GeoService(VisitorLogRepository repo) { this.repo = repo; }
 
     public void logAsync(String ip) {
-        if (isPrivate(ip)) return;
+        System.out.println("🌍 GeoService received IP: " + ip);
+        if (ip == null || ip.isBlank()) { System.out.println("⚠️ GeoService: blank IP, skipping"); return; }
+        if (isPrivate(ip)) { System.out.println("⚠️ GeoService: private IP " + ip + ", skipping"); return; }
         pool.submit(() -> {
             try {
                 GeoResult geo = cache.computeIfAbsent(ip, this::lookup);
+                System.out.println("🌍 GeoService resolved: " + ip + " → " + geo.country() + ", " + geo.city());
                 var entity = new VisitorLogEntity();
-                entity.setCountry(geo.country);
-                entity.setCountryCode(geo.countryCode);
-                entity.setCity(geo.city);
+                entity.setCountry(geo.country());
+                entity.setCountryCode(geo.countryCode());
+                entity.setCity(geo.city());
                 repo.save(entity);
             } catch (Exception e) {
-                System.out.println("⚠️ GeoService error: " + e.getMessage());
+                System.out.println("⚠️ GeoService save error: " + e.getMessage());
             }
         });
     }
@@ -42,7 +45,9 @@ public class GeoService {
     private GeoResult lookup(String ip) {
         try {
             String url = "http://ip-api.com/json/" + ip + "?fields=status,country,countryCode,city";
+            System.out.println("🌍 GeoService calling: " + url);
             Map<String, Object> r = http.getForObject(url, Map.class);
+            System.out.println("🌍 GeoService response: " + r);
             if (r != null && "success".equals(r.get("status"))) {
                 return new GeoResult(
                     (String) r.getOrDefault("country", "Unknown"),
@@ -50,17 +55,19 @@ public class GeoService {
                     (String) r.getOrDefault("city", "")
                 );
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            System.out.println("⚠️ GeoService lookup error for " + ip + ": " + e.getMessage());
+        }
         return new GeoResult("Unknown", "", "");
     }
 
-    private boolean isPrivate(String ip) {
+    public boolean isPrivate(String ip) {
         if (ip == null || ip.isBlank()) return true;
         return ip.equals("127.0.0.1") || ip.equals("::1") ||
                ip.startsWith("10.") || ip.startsWith("192.168.") ||
                ip.startsWith("172.16.") || ip.startsWith("172.17.") ||
                ip.startsWith("172.18.") || ip.startsWith("172.19.") ||
-               ip.startsWith("172.2") || ip.startsWith("172.30.") ||
+               ip.startsWith("172.2")   || ip.startsWith("172.30.") ||
                ip.startsWith("172.31.");
     }
 
