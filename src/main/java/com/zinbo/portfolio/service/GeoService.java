@@ -2,6 +2,7 @@ package com.zinbo.portfolio.service;
 
 import com.zinbo.portfolio.entity.VisitorLogEntity;
 import com.zinbo.portfolio.repository.VisitorLogRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -16,11 +17,15 @@ public class GeoService {
     private final VisitorLogRepository repo;
     private final RestTemplate http = new RestTemplate();
     private final ExecutorService pool = Executors.newSingleThreadExecutor();
+    private final String ipinfoToken;
 
-    // Cache IP → result so we don't hammer ip-api.com on repeat visits
     private final ConcurrentHashMap<String, GeoResult> cache = new ConcurrentHashMap<>();
 
-    public GeoService(VisitorLogRepository repo) { this.repo = repo; }
+    public GeoService(VisitorLogRepository repo,
+                      @Value("${app.ipinfo.token:}") String ipinfoToken) {
+        this.repo         = repo;
+        this.ipinfoToken  = ipinfoToken;
+    }
 
     public void logAsync(String ip) {
         System.out.println("🌍 GeoService received IP: " + ip);
@@ -44,21 +49,50 @@ public class GeoService {
     @SuppressWarnings("unchecked")
     private GeoResult lookup(String ip) {
         try {
-            String url = "http://ip-api.com/json/" + ip + "?fields=status,country,countryCode,city";
-            System.out.println("🌍 GeoService calling: " + url);
+            String url = "https://ipinfo.io/" + ip + "/json?token=" + ipinfoToken;
+            System.out.println("🌍 GeoService calling IPinfo for: " + ip);
             Map<String, Object> r = http.getForObject(url, Map.class);
             System.out.println("🌍 GeoService response: " + r);
-            if (r != null && "success".equals(r.get("status"))) {
-                return new GeoResult(
-                    (String) r.getOrDefault("country", "Unknown"),
-                    (String) r.getOrDefault("countryCode", ""),
-                    (String) r.getOrDefault("city", "")
-                );
+            if (r != null && !r.containsKey("error")) {
+                String country     = (String) r.getOrDefault("country", "Unknown");
+                String city        = (String) r.getOrDefault("city", "");
+                String region      = (String) r.getOrDefault("region", "");
+                // Show city + region for more detail e.g. "Choa Chu Kang, North West"
+                String fullCity    = (!city.isBlank() && !region.isBlank() && !city.equals(region))
+                                     ? city + ", " + region
+                                     : city.isBlank() ? region : city;
+                return new GeoResult(countryName(country), country, fullCity);
             }
         } catch (Exception e) {
             System.out.println("⚠️ GeoService lookup error for " + ip + ": " + e.getMessage());
         }
         return new GeoResult("Unknown", "", "");
+    }
+
+    // IPinfo returns ISO country code — convert to full name for display
+    private String countryName(String code) {
+        return switch (code) {
+            case "SG" -> "Singapore";
+            case "MY" -> "Malaysia";
+            case "US" -> "United States";
+            case "GB" -> "United Kingdom";
+            case "AU" -> "Australia";
+            case "IN" -> "India";
+            case "CN" -> "China";
+            case "JP" -> "Japan";
+            case "KR" -> "South Korea";
+            case "TH" -> "Thailand";
+            case "ID" -> "Indonesia";
+            case "PH" -> "Philippines";
+            case "VN" -> "Vietnam";
+            case "DE" -> "Germany";
+            case "FR" -> "France";
+            case "CA" -> "Canada";
+            case "NZ" -> "New Zealand";
+            case "HK" -> "Hong Kong";
+            case "TW" -> "Taiwan";
+            default   -> code;
+        };
     }
 
     public boolean isPrivate(String ip) {
