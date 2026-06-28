@@ -3,6 +3,7 @@ package com.zinbo.portfolio.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zinbo.portfolio.entity.*;
 import com.zinbo.portfolio.model.ApiResponse;
+import com.zinbo.portfolio.repository.VisitorLogRepository;
 import com.zinbo.portfolio.service.BackupService;
 import com.zinbo.portfolio.service.PortfolioService;
 import org.springframework.http.HttpStatus;
@@ -17,15 +18,18 @@ import java.util.Map;
 @RequestMapping("/api/admin")
 public class AdminController {
 
-    private final PortfolioService svc;
-    private final ViewController   viewCtrl;
-    private final BackupService    backup;
-    private final ObjectMapper     mapper = new ObjectMapper();
+    private final PortfolioService     svc;
+    private final ViewController       viewCtrl;
+    private final BackupService        backup;
+    private final VisitorLogRepository visitorRepo;
+    private final ObjectMapper         mapper = new ObjectMapper();
 
-    public AdminController(PortfolioService svc, ViewController viewCtrl, BackupService backup) {
-        this.svc      = svc;
-        this.viewCtrl = viewCtrl;
-        this.backup   = backup;
+    public AdminController(PortfolioService svc, ViewController viewCtrl,
+                           BackupService backup, VisitorLogRepository visitorRepo) {
+        this.svc         = svc;
+        this.viewCtrl    = viewCtrl;
+        this.backup      = backup;
+        this.visitorRepo = visitorRepo;
     }
 
     // ── Insights ───────────────────────────────────────────────────
@@ -432,5 +436,47 @@ public class AdminController {
         } catch (Exception e) {
             return ResponseEntity.ok(ApiResponse.ok(json));
         }
+    }
+
+    // ── Visitors ───────────────────────────────────────────────────
+
+    @GetMapping("/visitors")
+    public ResponseEntity<?> getVisitors() {
+        // Country breakdown
+        var countries = visitorRepo.countByCountry().stream().map(row -> {
+            String country     = (String) row[0];
+            String countryCode = (String) row[1];
+            long   count       = ((Number) row[2]).longValue();
+            var m = new LinkedHashMap<String, Object>();
+            m.put("country",     country);
+            m.put("countryCode", countryCode);
+            m.put("flag",        flag(countryCode));
+            m.put("count",       count);
+            return m;
+        }).toList();
+
+        // 20 most recent visits
+        var recent = visitorRepo.findTop20ByOrderByVisitedAtDesc().stream().map(v -> {
+            var m = new LinkedHashMap<String, Object>();
+            m.put("country",     v.getCountry());
+            m.put("countryCode", v.getCountryCode());
+            m.put("flag",        flag(v.getCountryCode()));
+            m.put("city",        v.getCity());
+            m.put("visitedAt",   v.getVisitedAt().toString());
+            return m;
+        }).toList();
+
+        var result = new LinkedHashMap<String, Object>();
+        result.put("total",     visitorRepo.count());
+        result.put("countries", countries);
+        result.put("recent",    recent);
+        return ResponseEntity.ok(ApiResponse.ok(result));
+    }
+
+    private String flag(String code) {
+        if (code == null || code.length() != 2) return "🌐";
+        int a = code.toUpperCase().charAt(0) - 'A' + 0x1F1E6;
+        int b = code.toUpperCase().charAt(1) - 'A' + 0x1F1E6;
+        return new String(Character.toChars(a)) + new String(Character.toChars(b));
     }
 }

@@ -18,10 +18,10 @@ public class JwtUtil {
 
     public JwtUtil(
         @Value("${app.jwt.secret}") String secret,
-        @Value("${app.jwt.expiry-hours}") int expiryHours
+        @Value("${app.jwt.expiry-minutes}") int expiryMinutes
     ) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
-        this.expiryMs = expiryHours * 3600L * 1000L;
+        this.expiryMs = expiryMinutes * 60L * 1000L;
     }
 
     // Generate a signed JWT for the given subject (e.g. "admin")

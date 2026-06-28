@@ -3,6 +3,8 @@ package com.zinbo.portfolio.controller;
 import com.zinbo.portfolio.entity.PageViewEntity;
 import com.zinbo.portfolio.model.ApiResponse;
 import com.zinbo.portfolio.repository.PageViewRepository;
+import com.zinbo.portfolio.service.GeoService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,8 +17,12 @@ import java.util.Map;
 public class ViewController {
 
     private final PageViewRepository repo;
+    private final GeoService geoService;
 
-    public ViewController(PageViewRepository repo) { this.repo = repo; }
+    public ViewController(PageViewRepository repo, GeoService geoService) {
+        this.repo = repo;
+        this.geoService = geoService;
+    }
 
     @GetMapping
     public ResponseEntity<ApiResponse<Map<String, Object>>> getViews() {
@@ -25,13 +31,16 @@ public class ViewController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<Map<String, Object>>> recordView(
-        @RequestBody(required = false) Map<String, String> body
+        @RequestBody(required = false) Map<String, String> body,
+        HttpServletRequest request
     ) {
         increment("total");
         if (body != null && body.containsKey("section")) {
             String section = body.get("section");
             if (section != null && !section.isBlank()) increment(section);
         }
+        // Fire geo lookup in background — doesn't block the response
+        geoService.logAsync(extractIp(request));
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(snapshot()));
     }
 
@@ -54,5 +63,14 @@ public class ViewController {
         });
         e.increment();
         repo.save(e);
+    }
+
+    private String extractIp(HttpServletRequest request) {
+        // Railway sits behind a load balancer — real IP is in X-Forwarded-For
+        String xff = request.getHeader("X-Forwarded-For");
+        if (xff != null && !xff.isBlank()) {
+            return xff.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 }

@@ -50,6 +50,6 @@ public class AuthController {
                 .body(ApiResponse.error("Invalid or expired code"));
         }
         String token = jwtUtil.generate("admin");
-        return ResponseEntity.ok(ApiResponse.ok(Map.of("token", token, "expiresIn", "8h")));
+        return ResponseEntity.ok(ApiResponse.ok(Map.of("token", token, "expiresIn", "30m")));
     }
 }
