@@ -66,20 +66,29 @@ public class ViewController {
     }
 
     private String extractIp(HttpServletRequest request) {
-        // Log all headers to help diagnose Railway proxy behaviour
-        String xff    = request.getHeader("X-Forwarded-For");
-        String xReal  = request.getHeader("X-Real-IP");
-        String remote = request.getRemoteAddr();
-        System.out.println("🔍 IP headers — XFF: " + xff + " | X-Real-IP: " + xReal + " | remoteAddr: " + remote);
-
+        // Cloudflare sets CF-Connecting-IP to the real visitor IP — check this first
+        String cf = request.getHeader("CF-Connecting-IP");
+        if (cf != null && !cf.isBlank() && !geoService.isPrivate(cf)) {
+            System.out.println("🔍 IP from CF-Connecting-IP: " + cf);
+            return cf.trim();
+        }
         // Walk XFF chain left-to-right, return first public IP
+        String xff = request.getHeader("X-Forwarded-For");
         if (xff != null && !xff.isBlank()) {
             for (String part : xff.split(",")) {
                 String ip = part.trim();
-                if (!geoService.isPrivate(ip)) return ip;
+                if (!geoService.isPrivate(ip)) {
+                    System.out.println("🔍 IP from X-Forwarded-For: " + ip);
+                    return ip;
+                }
             }
         }
-        if (xReal != null && !xReal.isBlank() && !geoService.isPrivate(xReal)) return xReal;
-        return remote;
+        String xReal = request.getHeader("X-Real-IP");
+        if (xReal != null && !xReal.isBlank() && !geoService.isPrivate(xReal)) {
+            System.out.println("🔍 IP from X-Real-IP: " + xReal);
+            return xReal;
+        }
+        System.out.println("🔍 IP from remoteAddr: " + request.getRemoteAddr());
+        return request.getRemoteAddr();
     }
 }
