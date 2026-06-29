@@ -462,6 +462,15 @@ public class AdminController {
             m.put("countryCode", v.getCountryCode());
             m.put("flag",        flag(v.getCountryCode()));
             m.put("city",        v.getCity());
+            m.put("isp",         v.getIsp());
+            m.put("browser",     v.getBrowser());
+            m.put("os",          v.getOs());
+            m.put("device",      v.getDevice());
+            m.put("referrer",    v.getReferrer());
+            m.put("language",    v.getLanguage());
+            m.put("screen",      v.getScreen());
+            m.put("timezone",    v.getTimezone());
+            m.put("darkMode",    v.getDarkMode());
             m.put("visitedAt",   v.getVisitedAt().toString());
             return m;
         }).toList();

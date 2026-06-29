@@ -23,25 +23,36 @@ public class GeoService {
 
     public GeoService(VisitorLogRepository repo,
                       @Value("${app.ipinfo.token:}") String ipinfoToken) {
-        this.repo         = repo;
-        this.ipinfoToken  = ipinfoToken;
+        this.repo        = repo;
+        this.ipinfoToken = ipinfoToken;
     }
 
-    public void logAsync(String ip) {
+    public void logAsync(String ip, VisitorData data) {
         System.out.println("🌍 GeoService received IP: " + ip);
-        if (ip == null || ip.isBlank()) { System.out.println("⚠️ GeoService: blank IP, skipping"); return; }
-        if (isPrivate(ip)) { System.out.println("⚠️ GeoService: private IP " + ip + ", skipping"); return; }
+        if (ip == null || ip.isBlank()) { System.out.println("⚠️ blank IP, skipping"); return; }
+        if (isPrivate(ip)) { System.out.println("⚠️ private IP " + ip + ", skipping"); return; }
+
         pool.submit(() -> {
             try {
                 GeoResult geo = cache.computeIfAbsent(ip, this::lookup);
-                System.out.println("🌍 GeoService resolved: " + ip + " → " + geo.country() + ", " + geo.city());
-                var entity = new VisitorLogEntity();
-                entity.setCountry(geo.country());
-                entity.setCountryCode(geo.countryCode());
-                entity.setCity(geo.city());
-                repo.save(entity);
-            } catch (Exception e) {
-                System.out.println("⚠️ GeoService save error: " + e.getMessage());
+                System.out.println("🌍 resolved: " + ip + " → " + geo.country() + ", " + geo.city() + " | " + geo.isp());
+
+                var e = new VisitorLogEntity();
+                e.setCountry(geo.country());
+                e.setCountryCode(geo.countryCode());
+                e.setCity(geo.city());
+                e.setIsp(geo.isp());
+                e.setBrowser(data.browser());
+                e.setOs(data.os());
+                e.setDevice(data.device());
+                e.setReferrer(data.referrer());
+                e.setLanguage(data.language());
+                e.setScreen(data.screen());
+                e.setTimezone(data.timezone());
+                e.setDarkMode(data.darkMode());
+                repo.save(e);
+            } catch (Exception ex) {
+                System.out.println("⚠️ GeoService error: " + ex.getMessage());
             }
         });
     }
@@ -50,26 +61,26 @@ public class GeoService {
     private GeoResult lookup(String ip) {
         try {
             String url = "https://ipinfo.io/" + ip + "/json?token=" + ipinfoToken;
-            System.out.println("🌍 GeoService calling IPinfo for: " + ip);
             Map<String, Object> r = http.getForObject(url, Map.class);
-            System.out.println("🌍 GeoService response: " + r);
+            System.out.println("🌍 IPinfo response: " + r);
             if (r != null && !r.containsKey("error")) {
-                String country     = (String) r.getOrDefault("country", "Unknown");
+                String countryCode = (String) r.getOrDefault("country", "");
                 String city        = (String) r.getOrDefault("city", "");
                 String region      = (String) r.getOrDefault("region", "");
-                // Show city + region for more detail e.g. "Choa Chu Kang, North West"
-                String fullCity    = (!city.isBlank() && !region.isBlank() && !city.equals(region))
-                                     ? city + ", " + region
-                                     : city.isBlank() ? region : city;
-                return new GeoResult(countryName(country), country, fullCity);
+                String org         = (String) r.getOrDefault("org", "");
+                // Strip AS number from org e.g. "AS7473 Singtel" → "Singtel"
+                String isp = org.replaceFirst("^AS\\d+\\s*", "");
+                String fullCity = (!city.isBlank() && !region.isBlank() && !city.equals(region))
+                                  ? city + ", " + region
+                                  : city.isBlank() ? region : city;
+                return new GeoResult(countryName(countryCode), countryCode, fullCity, isp);
             }
         } catch (Exception e) {
-            System.out.println("⚠️ GeoService lookup error for " + ip + ": " + e.getMessage());
+            System.out.println("⚠️ IPinfo error for " + ip + ": " + e.getMessage());
         }
-        return new GeoResult("Unknown", "", "");
+        return new GeoResult("Unknown", "", "", "");
     }
 
-    // IPinfo returns ISO country code — convert to full name for display
     private String countryName(String code) {
         return switch (code) {
             case "SG" -> "Singapore";
@@ -105,5 +116,8 @@ public class GeoService {
                ip.startsWith("172.31.");
     }
 
-    public record GeoResult(String country, String countryCode, String city) {}
+    public record GeoResult(String country, String countryCode, String city, String isp) {}
+    public record VisitorData(String browser, String os, String device,
+                              String referrer, String language, String screen,
+                              String timezone, Boolean darkMode) {}
 }
